@@ -4,12 +4,13 @@ from optparse import OptionParser
 
 import pymongo
 
+import mongo_util
 import util
 
-# TODO(jace): make db info configurable
-userdata_db = pymongo.Connection()['ka']  
-plog_db = pymongo.Connection(port=12345)['kadb_pl']
-report_db = pymongo.Connection('184.73.72.110')['report']
+
+userdata_db = mongo_util.get_db('entities_main')  
+plog_db = mongo_util.get_connection('datastore')['kadb_pl']
+report_db = mongo_util.get_db('reporting')
 
 ex_collection_name = 'daily_ex_stats'
 ex_mode_collection_name = 'daily_ex_mode_stats'
