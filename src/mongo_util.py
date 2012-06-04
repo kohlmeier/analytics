@@ -4,6 +4,8 @@ import sys
 
 import pymongo
 
+import util
+
 
 # reuse this JS code for a reducer that just sums
 reduce_sum_js = '''
@@ -21,9 +23,41 @@ function (key, values) {
 }
 '''
 
+def get_connection(mongo_server_name, config=util.default_analytics_config()):
+    """Return a pymongo.Connection to the named server.
+    
+    NOTE: the mongo_server_name is not the hostname of the machine or 
+    the name of EC2 instance, it is the name given to the mongo server in 
+    the analytics config file, which is the second argument.
+    """
+    server_config = config['servers']['mongo'][mongo_sever_name]
+
+    host = server_config['host']
+    port = server_config['port']
+
+    return pymongo.Connection(host, port)
+
+
+def get_db(db_name, config=util.default_analytics_config()):
+    """Return a pymongo Database reference as configured in 'config'."""
+    db_config = config['databases']['mongo'][db_name]
+
+    server_name = db_config['server']
+    db_name = db_config['database']
+    
+    return get_connection(server_name, config)[db_name]
+
+
 class MongoUtil() :
     """ Utility class that aids common uses of MongoDB data. """
     def __init__(self, dbname='testdb', host='localhost', port=27017):
+        """Constructs a connection to specified mongo server.
+        
+        NOTE: Please avoid connecting to the mongo servers directly in 
+        this way unless you have good reason.  Better to call get_connection()
+        and get_db() which looks up a server's location by name. 
+        """
+        
         self.connection = pymongo.Connection(host, port)
         self.db = self.connection[dbname]
         
