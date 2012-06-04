@@ -10,11 +10,11 @@
     # will typically include at least host and port info.
     "servers": {
         "mongo": {
-            "datastore" : {
+            "datastore": {
                 "host": "107.21.59.74", 
                 "port": 12345
             },
-            "reporting" : {
+            "reporting": {
                 "host": "184.73.72.110",  # currently on ka-backup
                 "port": 27017
             } 
@@ -23,8 +23,8 @@
 
     "databases" : {
         # For each mongo database, the server name should be listed above
-        "mongo" : {
-            "entities_main" : {
+        "mongo": {
+            "entities_main": {
                 "server": "datastore",
                 "database": "kadb"
             },
@@ -34,8 +34,8 @@
             }
     },   
 
-    "instances" : {},   # TODO: for ec2 instances
+    #"instances" : {},   # TODO: for ec2 instances
 
-    "datasources" : {}  # TODO: for s3 paths, etc
+    #"datasources" : {}  # TODO: for s3 paths, etc
     
 }
