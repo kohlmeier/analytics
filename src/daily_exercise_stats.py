@@ -9,6 +9,8 @@ userdata_db = None
 plog_db = None
 report_db = None
 
+g_logger = util.get_logger()
+
 ex_collection_name = 'daily_ex_stats'
 ex_mode_collection_name = 'daily_ex_mode_stats'
 
@@ -233,6 +235,10 @@ def main():
     parser.add_option("-c", "--config", 
                       help="Full path to analytics.json or equivalent.")
     (options, dummy) = parser.parse_args()
+
+    if not options.config:
+        g_logger.fatal("Please specify JSON config file to use.")
+        exit(1)
 
     init_databases(options.config)
     
