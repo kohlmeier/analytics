@@ -48,7 +48,7 @@ def get_db(db_name, config_location):
     server_name = db_config['server']
     db_name = db_config['database']
     
-    return get_connection(server_name, config)[db_name]
+    return get_connection(server_name, config_location)[db_name]
 
 
 class MongoUtil() :
