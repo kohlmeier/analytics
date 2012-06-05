@@ -30,7 +30,7 @@ def get_connection(mongo_server_name, config=util.default_analytics_config()):
     the name of EC2 instance, it is the name given to the mongo server in 
     the analytics config file, which is the second argument.
     """
-    server_config = config['servers']['mongo'][mongo_sever_name]
+    server_config = config['servers']['mongo'][mongo_server_name]
 
     host = server_config['host']
     port = server_config['port']

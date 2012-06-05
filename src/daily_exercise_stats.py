@@ -2,8 +2,6 @@ import copy
 import datetime
 from optparse import OptionParser
 
-import pymongo
-
 import mongo_util
 import util
 
