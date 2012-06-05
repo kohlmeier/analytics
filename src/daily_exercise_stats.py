@@ -218,11 +218,11 @@ def daily_exercise_statistics(start_day, end_day):
         day -= datetime.timedelta(days=1)
         
 
-def init_databases(config_filename):
-    global userdata_db = mongo_util.get_db('entities_main', config_filename)  
-    global plog_db = mongo_util.get_connection(
-            'datastore', config_filename)['kadb_pl']
-    global report_db = mongo_util.get_db('reporting', config_filename)
+def init_databases(config_loc):
+    global userdata_db, plog_db, report_db
+    userdata_db = mongo_util.get_db('entities_main', config_loc)  
+    plog_db = mongo_util.get_connection('datastore', config_loc)['kadb_pl']
+    report_db = mongo_util.get_db('reporting', config_loc)
     
     
 def main():
