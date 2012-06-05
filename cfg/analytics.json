@@ -32,6 +32,7 @@
                 "server": "reporting",
                 "database": "report"
             }
+        }
     },   
 
     "instances" : {},   # TODO: for ec2 instances
