@@ -5,10 +5,9 @@ from optparse import OptionParser
 import mongo_util
 import util
 
-
-userdata_db = mongo_util.get_db('entities_main')  
-plog_db = mongo_util.get_connection('datastore')['kadb_pl']
-report_db = mongo_util.get_db('reporting')
+userdata_db = None  
+plog_db = None
+report_db = None
 
 ex_collection_name = 'daily_ex_stats'
 ex_mode_collection_name = 'daily_ex_mode_stats'
@@ -218,13 +217,25 @@ def daily_exercise_statistics(start_day, end_day):
         run_for_day(day)
         day -= datetime.timedelta(days=1)
         
+
+def init_databases(config_filename):
+    global userdata_db = mongo_util.get_db('entities_main', config_filename)  
+    global plog_db = mongo_util.get_connection(
+            'datastore', config_filename)['kadb_pl']
+    global report_db = mongo_util.get_db('reporting', config_filename)
+    
+    
 def main():
     desc = "Generates daily time series of statistics on exercise usage."
     parser = OptionParser(usage="%prog [options]", description=desc)
     parser.add_option("-b", "--begindate", help="In format YYYY-MM-DD.")
     parser.add_option("-e", "--enddate", help="In format YYYY-MM-DD.")
+    parser.add_option("-c", "--config", 
+                      help="Full path to analytics.json or equivalent.")
     (options, dummy) = parser.parse_args()
 
+    init_databases(options.config)
+    
     if options.begindate and options.enddate:
         start_date = datetime.datetime.strptime(options.begindate, "%Y-%m-%d")
         end_date =  datetime.datetime.strptime(options.enddate, "%Y-%m-%d")

@@ -88,11 +88,6 @@ def db_decorator(max_tries, func):
     return new_func
 
 
-def default_analytics_config():
-    """Return an object representing the default analytics configuration.""" 
-    file_name = get_root_dir() + "/cfg/analytics.json"
-    return load_unstripped_json(file_name)
-
 def dict_to_csv(dict, out_filename=None):
     
     original_stdout = sys.stdout
@@ -135,10 +130,6 @@ def get_logger():
     logger.addHandler(ch)
     return logger
 
-
-def get_root_dir():
-    """Return the root of the analytics tree from an enivronment variable."""
-    return os.getenv('KA_ROOT_DIR', os.getenv('HOME') + "/analytics")
 
 def global_file_replace(filename, substitutions):
     """ 

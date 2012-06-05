@@ -23,13 +23,15 @@ function (key, values) {
 }
 '''
 
-def get_connection(mongo_server_name, config=util.default_analytics_config()):
+def get_connection(mongo_server_name, config_location):
     """Return a pymongo.Connection to the named server.
     
     NOTE: the mongo_server_name is not the hostname of the machine or 
     the name of EC2 instance, it is the name given to the mongo server in 
-    the analytics config file, which is the second argument.
+    the main analytics config file, the location of which is 
+    the second argument.
     """
+    config = util.load_unstripped_json(config_location)
     server_config = config['servers']['mongo'][mongo_server_name]
 
     host = server_config['host']
@@ -38,8 +40,9 @@ def get_connection(mongo_server_name, config=util.default_analytics_config()):
     return pymongo.Connection(host, port)
 
 
-def get_db(db_name, config=util.default_analytics_config()):
+def get_db(db_name, config_location):
     """Return a pymongo Database reference as configured in 'config'."""
+    config = util.load_unstripped_json(config_location)
     db_config = config['databases']['mongo'][db_name]
 
     server_name = db_config['server']

@@ -34,8 +34,8 @@
             }
     },   
 
-    #"instances" : {},   # TODO: for ec2 instances
+    "instances" : {},   # TODO: for ec2 instances
 
-    #"datasources" : {}  # TODO: for s3 paths, etc
+    "datasources" : {}  # TODO: for s3 paths, etc
     
 }
