@@ -18,10 +18,14 @@ TODO(jace): make the MIRT training output JSON and eliminate this script
 
 import json
 import numpy
+import os
 import sys
 
+sys.path.append(os.path.dirname(__file__) + '../../stable')
 
-def mirt_npz_to_json(npz_file):
+
+def mirt_npz_to_json(npz_file, outfile=None, slug=None, title=None,
+                     description=None):
     model = numpy.load(npz_file)
 
     theta = model["theta"][()]
@@ -36,24 +40,24 @@ def mirt_npz_to_json(npz_file):
             "theta_flat": theta.flat().tolist(),
             "num_abilities": theta.num_abilities,
             "max_length": 15,
-            "max_time_taken": model["max_time_taken"]
-            }
-        }
+            "max_time_taken": int(model["max_time_taken"]),
+        }}
 
-    slug = ""
     while not slug:
         print >>sys.stderr, "Enter the slug (required): ",
         slug = raw_input()
 
-    print >>sys.stderr, ("Title can be left blank if you will be updating "
-                         "an existing model.")
-    print >>sys.stderr, "Enter the title (or hit enter for none): ",
-    title = raw_input()
+    if not title:
+        print >>sys.stderr, ("Title can be left blank if you will be updating "
+                             "an existing model.")
+        print >>sys.stderr, "Enter the title (or hit enter for none): ",
+        title = raw_input()
 
-    print >>sys.stderr, ("Description can be left blank if you will be "
-                         "updating an existing model.")
-    print >>sys.stderr, "Enter the description (or hit enter for none): ",
-    description = raw_input()
+    if not description:
+        print >>sys.stderr, ("Description can be left blank if you will be "
+                             "updating an existing model.")
+        print >>sys.stderr, "Enter the description (or hit enter for none): ",
+        description = raw_input()
 
     if slug:
         out_data["slug"] = slug
@@ -64,7 +68,11 @@ def mirt_npz_to_json(npz_file):
 
     json_data = json.dumps(out_data, indent=4)
 
-    print json_data
+    if outfile:
+        f = open(outfile, 'w')
+        f.write(json_data)
+    else:
+        print json_data
 
 
 if __name__ == "__main__":

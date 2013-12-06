@@ -18,6 +18,8 @@ class FieldIndexer:
             'number_attempts', 'number_hints', 'eventually_correct',
             'topic_mode', 'dt']
 
+    simple_fields = ['user', 'time_done', 'exercise', 'time_taken', 'correct']
+
 
 def sequential_problem_numbers(attempts, idx):
     """Takes all problem logs for a user as a list of lists, indexed by idx,

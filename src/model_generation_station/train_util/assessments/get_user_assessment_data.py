@@ -35,7 +35,7 @@ import re
 import sys
 
 
-def preprocess():
+def preprocess(simple=False):
 
     slug_counts = collections.defaultdict(int)
     (complete_count, valid_count, total_count) = (0, 0, 0)
@@ -53,9 +53,9 @@ def preprocess():
         # debugging and sanity checking data quality
         slug_counts[user_assessment['slug']] += 1
         total_count += 1
-        # HACK(jace): 15 is the question length of all assessments
+        # HACK(jace/eliana): 8 is the question length of all assessments
         # we've used so far.  Again, this is just for debugging.
-        if len(history) == 15:
+        if len(history) == 8:
             complete_count += 1
         if sum(r['correct'] for r in history) > 3:
             valid_count += 1
@@ -68,24 +68,37 @@ def preprocess():
             # formatting to match output of hive queries
             hive_bool = lambda b: "true" if b else "false"
 
-            # the following conforms to the input format expected by
-            # mirt_train_EM.py
-            outline = (key + ","  # use assessment key instead of user
-                    + response['time_done'] + ","
-                    + 'problemlog' + ","  # not really a plog, but similar
-                    + response['exercise'] + ","
-                    + response['problem_type'] + ","
-                    + response['seed'] + ","
-                    + "%d" % response['time_taken'] + ","
-                    + "%d" % problem_nums[response['exercise']] + ","
-                    + hive_bool(response['correct']) + ","
-                    + "1" + ","  # count_attempts
-                    + "0" + ","  # count_hints
-                    + hive_bool(response['correct']) + ","  # eventually_crrct
-                    + "false" + ","  # topic_mode
-                    + "None" + ","  # key
-                    + "None" + ","  # dt
-                    )
+            if simple:
+                # An easy format to use for arbitrary data that only has the
+                # fields we use in MIRT training for assessments.
+                outline = (key + ","  # use assessment key instead of user
+                        + response['time_done'] + ","  # Not important,
+                          # assuming the questions are in the right order
+                        + response['exercise'] + ","
+                        + "%d" % response['time_taken'] + ","
+                        + hive_bool(response['correct']) + ","
+                           )
+            else:
+                # the following conforms to the input format expected by
+                # mirt_train_EM.py
+                outline = (key + ","  # use assessment key instead of user
+                        + response['time_done'] + ","
+                        + 'problemlog' + ","  # not really a plog, but similar
+                        + response['exercise'] + ","
+                        + response['problem_type'] + ","
+                        + response['seed'] + ","
+                        + "%d" % response['time_taken'] + ","
+                        + "%d" % problem_nums[response['exercise']] + ","
+                        + hive_bool(response['correct']) + ","
+                        + "1" + ","  # count_attempts
+                        + "0" + ","  # count_hints
+                        # eventually_crrct # TODO(eliana): What? this is just
+                        # correct. We're not using it, but we do have the field
+                        + hive_bool(response['correct']) + ","
+                        + "false" + ","  # topic_mode
+                        + "None" + ","  # key
+                        + "None" + ","  # dt
+                           )
 
             print outline
 

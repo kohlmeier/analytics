@@ -14,7 +14,6 @@ USAGE:
   this process.
 
 """
-import affinity
 from collections import defaultdict
 import copy
 import fileinput
@@ -27,23 +26,34 @@ import scipy.optimize
 import sys
 import time
 
-# necessary to do this after importing numpy to take avantage of
+# necessary to do this after importing numpy to take advantage of
 # multiple cores on unix
-affinity.set_process_affinity_mask(0, 2 ** multiprocessing.cpu_count() - 1)
+try:
+    import affinity
+    affinity.set_process_affinity_mask(0, 2 ** multiprocessing.cpu_count() - 1)
+except:
+    # Affinity is only implemented for linux systems
+    pass
 
 # the following is imported the Khan web application source
-import accuracy_model_util as acc_util
-from assessment import mirt_util
+import train_util.accuracy_model_util as acc_util
+from mirt import mirt_util
 
 
 # used to index the fields in with a line of text in the input data file
 linesplit = acc_util.linesplit
-idx_pl = acc_util.FieldIndexer(acc_util.FieldIndexer.plog_fields)
-
 
 # num_exercises and generate_exercise_ind are used in the creation of a
 # defaultdict for mapping exercise names to an unique integer index
 num_exercises = 0
+
+
+def get_indexer(options):
+    if options.data_format == 'simple':
+        idx_pl = acc_util.FieldIndexer(acc_util.FieldIndexer.simple_fields)
+    else:
+        idx_pl = acc_util.FieldIndexer(acc_util.FieldIndexer.plog_fields)
+    return idx_pl
 
 
 def generate_exercise_ind():
@@ -85,7 +95,7 @@ def sample_abilities_diffusion(args):
     return abilities, Eabilities, user_index
 
 
-def get_cmd_line_options():
+def get_cmd_line_options(arguments=None):
     parser = optparse.OptionParser()
     parser.add_option("-a", "--num_abilities", type=int, default=1,
                       help=("Number of hidden ability units"))
@@ -143,8 +153,13 @@ def get_cmd_line_options():
                             "correctness."))
     parser.add_option("-r", "--resume_from_file", default='',
                       help=("Name of a .npz file to bootstrap the couplings."))
+    parser.add_option("-d", "--data_format", default='simple',
+                      help=("The field indexer format of the input."))
 
-    options, _ = parser.parse_args()
+    if arguments:
+        options, _ = parser.parse_args(arguments)
+    else:
+        options, _ = parser.parse_args()
 
     if options.output == '':
         # default filename
@@ -156,10 +171,11 @@ def get_cmd_line_options():
 
 def create_user_state(lines, exercise_ind_dict, options):
     """Create a dictionary to hold training information for a single user."""
+    idx_pl = get_indexer(options)
     correct = np.asarray([line[idx_pl.correct] for line in lines]
-            ).astype(int)
+                         ).astype(int)
     time_taken = np.asarray([line[idx_pl.time_taken] for line in lines]
-            ).astype(int)
+                            ).astype(int)
     time_taken[time_taken < 1] = 1
     time_taken[time_taken > options.max_time_taken] = options.max_time_taken
     exercises = [line[idx_pl.exercise] for line in lines]
@@ -338,12 +354,20 @@ def check_grad(L_dL, theta, args=()):
 
 def main():
     options = get_cmd_line_options()
-    print >>sys.stderr, "Starting main.", options  # DEBUG
+    run(options)
 
+
+def run_programmatically(arguments):
+    options = get_cmd_line_options(arguments)
+    run(options)
+
+
+def run(options):
+    print >>sys.stderr, "Starting main.", options  # DEBUG
+    idx_pl = get_indexer(options)
     pool = None
     if options.workers > 0:
         pool = Pool(options.workers)
-
     exercise_ind_dict = defaultdict(generate_exercise_ind)
 
     user_states = []
@@ -359,26 +383,44 @@ def main():
             # split on either tab or \x01 so the code works via Hive or pipe
             row = linesplit.split(line.strip())
 
-            # TODO(jace): If training on UserAssessment data, the 'user'
-            # field here is probably populated with the UserAssessment key.
-            # Fix the naming.
-            user = row[idx_pl.user]
-            if prev_user and user != prev_user and len(attempts) > 0:
-                # We're getting a new user, so perform the reduce operation
-                # on our previous user
-                user_states.append(create_user_state(
-                        attempts, exercise_ind_dict, options))
-                attempts = []
-            prev_user = user
-            if row[idx_pl.rowtype] == 'problemlog':
+            if options.data_format == 'simple':
+                # If this is sample data or simplified data, rather than Khan
+                # Academy problem logs, we can use the simpler parser
+                user = row[idx_pl.user]
+                if prev_user and user != prev_user and len(attempts) > 0:
+                    # We're getting a new user, so perform the reduce operation
+                    # on our previous user
+                    user_states.append(create_user_state(
+                            attempts, exercise_ind_dict, options))
+                    attempts = []
+                prev_user = user
                 row[idx_pl.correct] = row[idx_pl.correct] == 'true'
-                row[idx_pl.eventually_correct] = (
-                    row[idx_pl.eventually_correct] == 'true')
-                row[idx_pl.problem_number] = int(row[idx_pl.problem_number])
-                row[idx_pl.number_attempts] = int(row[idx_pl.number_attempts])
-                row[idx_pl.number_hints] = int(row[idx_pl.number_hints])
                 row[idx_pl.time_taken] = float(row[idx_pl.time_taken])
                 attempts.append(row)
+
+            else:
+                # TODO(jace): If training on UserAssessment data, the 'user'
+                # field here is probably populated with the UserAssessment key.
+                # Fix the naming.
+                user = row[idx_pl.user]
+                if prev_user and user != prev_user and len(attempts) > 0:
+                    # We're getting a new user, so perform the reduce operation
+                    # on our previous user
+                    user_states.append(create_user_state(
+                            attempts, exercise_ind_dict, options))
+                    attempts = []
+                prev_user = user
+                if row[idx_pl.rowtype] == 'problemlog':
+                    row[idx_pl.correct] = row[idx_pl.correct] == 'true'
+                    row[idx_pl.eventually_correct] = (
+                        row[idx_pl.eventually_correct] == 'true')
+                    row[idx_pl.problem_number] = int(
+                        row[idx_pl.problem_number])
+                    row[idx_pl.number_attempts] = int(
+                        row[idx_pl.number_attempts])
+                    row[idx_pl.number_hints] = int(row[idx_pl.number_hints])
+                    row[idx_pl.time_taken] = float(row[idx_pl.time_taken])
+                    attempts.append(row)
 
         if len(attempts) > 0:
             # flush the data for the final user, too
