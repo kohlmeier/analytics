@@ -40,7 +40,7 @@ for line in sys.stdin:
                 # we print the responses in simplified form
                 if decent:
                     for r in current_responses:
-                        r = r.split()
+                        r = r.split(',')
                         print string.join(
                             [r[USER_INDEX], r[DT_INDEX], r[EXERCISE_INDEX],
                             r[TIME_INDEX], r[CORRECT_INDEX]], ',')
