@@ -5,7 +5,7 @@
 # Use: ./gen_data.py path/to/output/file path/to/model_generation_station
 
 # First set up paths
-data_dir="/tmp/data/"
+data_dir="/tmp/data/"  # TODO(jace) take as an arg
 download_dir="${data_dir}UserAssessmentP/"
 output_file="$1"
 model_generation_station="$2"
@@ -13,7 +13,7 @@ assessments_data_util="${model_generation_station}/train_util/assessments"
 download=true
 if $download; then
     rm "${download_dir}/all_unfiltered.responses"
-    for i in $(seq 7 -1 1)
+    for i in $(seq 7 -1 1)  # TODO(jace) take as an arg
     do
       # for each day in the last week download the user assessment data and save it
       d=`date --"date=$i day ago" +%Y-%m-%d`;

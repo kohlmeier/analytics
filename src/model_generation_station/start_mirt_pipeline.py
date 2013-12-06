@@ -74,7 +74,7 @@ def get_command_line_arguments(arguments=None):
         help=("Trains multiple models with and without time. Double the"
               "models, double the fun."))
     parser.add_argument(
-        '-w', '--workers', type=int, default=1,
+        '-w', '--workers', type=int, default=0,
         help=("The number of processes to use to parallelize mirt training"))
     parser.add_argument(
         "-n", "--num_epochs", type=int, default=100,
