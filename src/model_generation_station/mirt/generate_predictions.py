@@ -69,11 +69,11 @@ def parse_line(line, user_idx, exercise_idx, time_idx, correct_idx):
     Returns the user, exercise, time taken, and whether the problem was
     answered correctly
     """
-    line = line.split(',')
+    line = line.rstrip().split(',')
     user = line[user_idx]
     ex = line[exercise_idx]
     time = line[time_idx]
-    correct = line[correct_idx] == 'true' or line[correct_idx] == 'True'
+    correct = line[correct_idx] in ['true', 'True', True, 1]
     return user, ex, time, correct
 
 
@@ -84,7 +84,8 @@ def write_roc_datapoint(last_ex, last_correct, history, model, outfile):
     """
     try:
         acc = model.estimated_exercise_accuracy(history, last_ex)
-    except:
+    except KeyError:
+        print "KeyError in write_roc_datapoint."
         return
 
     if last_correct:
