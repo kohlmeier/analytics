@@ -368,6 +368,11 @@ def run(options):
     pool = None
     if options.workers > 0:
         pool = Pool(options.workers)
+
+    # We're kicking off a brand new run.. it's important to reset the
+    # indexing/count of exercises
+    global num_exercises
+    num_exercises = 0
     exercise_ind_dict = defaultdict(generate_exercise_ind)
 
     user_states = []
