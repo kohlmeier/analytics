@@ -21,7 +21,7 @@ class Parameters(object):
             # the guess parameters for each exercise
             self.guess = np.zeros((num_exercises))
             # the slip parameters for each exercise
-            self.slip = np.zeros((num_exercises))
+            self.slip = np.ones((num_exercises))
         else:
             nn = num_exercises * (num_abilities + 1)
             # the couplings to correct/incorrect (+1 for bias unit)
@@ -39,7 +39,7 @@ class Parameters(object):
             else:
                 # Models generated prior to use of guess/slip default to zeros            
                 self.guess = np.zeros((num_exercises))
-                self.slip = np.zeros((num_exercises))
+                self.slip = np.ones((num_exercises))
 
         assert(self.W_correct.shape == self.W_time.shape)
         assert(self.guess.shape == self.slip.shape)
@@ -121,8 +121,8 @@ def conditional_probability_correct(abilities, theta, exercises_ind):
     # The shape of abilities will become (a+1, 1).
     abilities = np.append(abilities.copy(), np.ones((1, 1)), axis=0)
     W_correct = theta.W_correct[exercises_ind, :]
-    guess = theta.guess[exercises_ind]
-    slip = theta.slip[exercises_ind]
+    guess = theta.guess[exercises_ind].reshape((len(exercises_ind), 1))
+    slip = theta.slip[exercises_ind].reshape((len(exercises_ind), 1))
     
     Z_raw = sigmoid(np.dot(W_correct, abilities))
     Z = (slip - guess) * Z_raw + guess
