@@ -121,8 +121,11 @@ def conditional_probability_correct(abilities, theta, exercises_ind):
     # The shape of abilities will become (a+1, 1).
     abilities = np.append(abilities.copy(), np.ones((1, 1)), axis=0)
     W_correct = theta.W_correct[exercises_ind, :]
+    guess = theta.guess[exercises_ind]
+    slip = theta.slip[exercises_ind]
+    
     Z_raw = sigmoid(np.dot(W_correct, abilities))
-    Z = (theta.slip - theta.guess) * Z_raw + theta.guess
+    Z = (slip - guess) * Z_raw + guess
     Z = np.reshape(Z, Z.size)  # flatten to 1-d ndarray
     return Z
 
