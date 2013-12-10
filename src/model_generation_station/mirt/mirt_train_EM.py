@@ -160,6 +160,9 @@ def get_cmd_line_options(arguments=None):
                       help=("Name of a .npz file to bootstrap the couplings."))
     parser.add_option("-d", "--data_format", default='simple',
                       help=("The field indexer format of the input."))
+    parser.add_option("-c", "--check_gradient", action="store_true",
+                      default=False,
+                      help=("Run an empirical check on the gradients."))
 
     if arguments:
         options, _ = parser.parse_args(arguments)
@@ -360,20 +363,20 @@ def emit_features(user_states, theta, options, split_desc):
     f.close()
 
 
-def check_grad(L_dL, theta, args=()):
+def check_grad(L_dL, theta_flat, args=()):
     print >>sys.stderr, "Checking gradients."
 
     step_size = 1e-6
 
-    f0, df0 = L_dL(theta.copy(), *args)
+    f0, df0 = L_dL(theta_flat.copy(), *args)
     # test gradients in random order. This lets us run check gradients on the
     # full size model, but still statistically test every type of gradient.
-    test_order = range(theta.shape[0])
+    test_order = range(theta_flat.size)
     np.random.shuffle(test_order)
     for ind in test_order:
-        theta_offset = np.zeros(theta.shape)
+        theta_offset = np.zeros(theta_flat.size)
         theta_offset[ind] = step_size
-        f1, df1 = L_dL(theta.copy() + theta_offset, *args)
+        f1, df1 = L_dL(theta_flat.copy() + theta_offset, *args)
         df_true = (f1 - f0) / step_size
 
         # error in the gradient divided by the mean gradient
@@ -539,8 +542,9 @@ def run(options):
         print >>sys.stderr, "<abilities>", mn_a,
         print >>sys.stderr, ", <abilities^2>", cov_a, ", ",
 
-        # check_grad(L_dL, theta.flat(), args=(user_states,
-        #     num_exercises, options, pool))
+        if options.check_gradient:
+            check_grad(L_dL, theta.flat(), args=(user_states,
+                num_exercises, options, pool))
 
         # Maximization step
         old_theta_flat = theta.flat()
