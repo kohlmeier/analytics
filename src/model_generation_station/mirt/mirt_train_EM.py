@@ -258,8 +258,11 @@ def L_dL_singleuser(arg):
         dL.sigma_time += 1. / sigma.ravel()
 
     if options.guess_and_slip:
-        dL.guess += (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
-        dL.slip += (2. * Zt * Z_raw - Z_raw)/ pdata
+        delta_guess = (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
+        dL.guess += delta_guess.ravel()  
+        
+        delta_slip = (2. * Zt * Z_raw - Z_raw)/ pdata
+        dL.slip += delta_slip.ravel()
 
     return L, dL, exercises_ind
 
