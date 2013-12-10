@@ -138,8 +138,6 @@ def conditional_probability_correct(abilities, theta, exercises_ind):
     # The shape of abilities will become (a+1, 1).
     abilities = np.append(abilities.copy(), np.ones((1, 1)), axis=0)
     W_correct = theta.W_correct[exercises_ind, :]
-    #guess = theta.bounded_guess()[exercises_ind].reshape((len(exercises_ind), 1))
-    #slip = theta.bounded_slip()[exercises_ind].reshape((len(exercises_ind), 1))
     guess = theta.guess[exercises_ind].reshape((len(exercises_ind), 1))
     slip = theta.slip[exercises_ind].reshape((len(exercises_ind), 1))
     

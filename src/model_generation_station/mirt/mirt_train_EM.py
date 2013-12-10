@@ -299,8 +299,8 @@ def L_dL(theta_flat, user_states, num_exercises, options, pool):
         # extra *1e6 to make guess and slip outside the range VERY expensive
         L += np.sum(reg_constant * 1e6* nu * diff ** 2)
         dL_guess_or_slip += 2. * reg_constant * 1e6 * nu * diff
-    reg_guess_and_slip(theta.guess, 0., .25, options.regularization, L, dL.guess)
-    reg_guess_and_slip(theta.slip, .75, 1., options.regularization, L, dL.slip)
+    #reg_guess_and_slip(theta.guess, 0., .25, options.regularization, L, dL.guess)
+    #reg_guess_and_slip(theta.slip, .75, 1., options.regularization, L, dL.slip)
 
     # TODO(jascha) this would be faster if user_states was divided into
     # minibatches instead of single students
