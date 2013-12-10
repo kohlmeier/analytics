@@ -64,6 +64,11 @@ class Parameters(object):
         # slip is bounded above by 1.
         bounds.append([(.5, 1.)] * self.num_exercises)
 
+    def bounded_guess(self):
+        return np.clip(self.guess, 0., .5)
+
+    def bounded_slip(self):
+        return np.clip(self.slip, .5, 1.)
 
 def sigmoid(X):
     """Compute the sigmoid function element-wise on X.
@@ -132,8 +137,8 @@ def conditional_probability_correct(abilities, theta, exercises_ind):
     # The shape of abilities will become (a+1, 1).
     abilities = np.append(abilities.copy(), np.ones((1, 1)), axis=0)
     W_correct = theta.W_correct[exercises_ind, :]
-    guess = theta.guess[exercises_ind].reshape((len(exercises_ind), 1))
-    slip = theta.slip[exercises_ind].reshape((len(exercises_ind), 1))
+    guess = theta.bounded_guess()[exercises_ind].reshape((len(exercises_ind), 1))
+    slip = theta.bounded_slip()[exercises_ind].reshape((len(exercises_ind), 1))
     
     Z_raw = sigmoid(np.dot(W_correct, abilities))
     Z = (slip - guess) * Z_raw + guess

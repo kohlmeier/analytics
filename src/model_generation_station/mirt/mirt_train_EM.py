@@ -222,8 +222,9 @@ def L_dL_singleuser(arg):
                           axis=0)
     # the abilities to exercise coupling parameters for this exercise
     W_correct = theta.W_correct[exercises_ind, :]
-    guess = theta.guess[exercises_ind].reshape((n, 1))
-    slip = theta.slip[exercises_ind].reshape((n, 1))
+    # STOPSHIP(jace) - got to be a better way then messing up the gradient here
+    guess = theta.bounded_guess[exercises_ind].reshape((n, 1))
+    slip = theta.bounded_slip[exercises_ind].reshape((n, 1))
 
     # calculate the probability of getting a question in this exercise correct
     Y = np.dot(W_correct, abilities)
@@ -289,13 +290,14 @@ def L_dL(theta_flat, user_states, num_exercises, options, pool):
 
     # also regularize values of guess and slip outside a desired range
     def reg_guess_and_slip(param_vect, desired_min, desired_max, reg_constant,
-            L, dL):
+            L, dL_guess_or_slip):
         diff = np.maximum(param_vect - desired_max, desired_min - param_vect)
         diff = np.maximum(diff, 0.)
-        L += np.sum(reg_constant * nu * diff ** 2)
-        dL.sigma_time += 2. * reg_constant * nu * diff
-    reg_guess_and_slip(theta.guess, 0., .25, options.regularization, L, dL)
-    reg_guess_and_slip(theta.slip, .75, 1., options.regularization, L, dL)
+        # extra *1e6 to make guess and slip outside the range VERY expensive
+        L += np.sum(reg_constant * 1e6* nu * diff ** 2)
+        dL_guess_or_slip += 2. * reg_constant * 1e6 * nu * diff
+    reg_guess_and_slip(theta.guess, 0., .25, options.regularization, L, dL.guess)
+    reg_guess_and_slip(theta.slip, .75, 1., options.regularization, L, dL.slip)
 
     # TODO(jascha) this would be faster if user_states was divided into
     # minibatches instead of single students
