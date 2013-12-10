@@ -258,10 +258,10 @@ def L_dL_singleuser(arg):
         dL.sigma_time += 1. / sigma.ravel()
 
     if options.guess_and_slip:
-        delta_guess = (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
+        delta_guess = -1. * (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
         dL.guess += delta_guess.ravel()  
         
-        delta_slip = (2. * Zt * Z_raw - Z_raw)/ pdata
+        delta_slip = -1. * (2. * Zt * Z_raw - Z_raw)/ pdata
         dL.slip += delta_slip.ravel()
 
     return L, dL, exercises_ind
@@ -542,10 +542,11 @@ def run(options):
 
         # Maximization step
         old_theta_flat = theta.flat()
-        #print "about to minimize"
+        # call scipy for the minimization
         theta_flat, L, _ = scipy.optimize.fmin_l_bfgs_b(
             L_dL,
             theta.flat(),
+            bounds=theta.get_bounds(),
             args=(user_states, num_exercises, options, pool),
             disp=0,
             maxfun=options.max_pass_lbfgs, m=100)

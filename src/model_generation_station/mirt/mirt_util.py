@@ -53,6 +53,17 @@ class Parameters(object):
                 self.slip.ravel(),
                 ))
 
+    def get_bounds(self):
+        """Returns bounds on the parameters as a list of (min, max) tuples.
+
+        This is useful, for example, in calls to scipy.optimize.fmin_l_bfgs_b.
+        """
+        bounds = [(None, None)] * (self.flat().size - self.num_exercises * 2)
+        # guess is bounded below by 0.
+        bounds.append([(0., None)] * self.num_exercises)
+        # slip is bounded above by 1.
+        bounds.append([(None, 1.)] * self.num_exercises)
+
 
 def sigmoid(X):
     """Compute the sigmoid function element-wise on X.
