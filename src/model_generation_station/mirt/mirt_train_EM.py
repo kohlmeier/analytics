@@ -382,10 +382,10 @@ def check_grad(L_dL, theta_flat, args=()):
         # error in the gradient divided by the mean gradient
         rr = (df0[ind] - df_true) * 2. / (df0[ind] + df_true)
 
-        print "ind", ind, "ind mod 3", np.mod(ind, 3),
-        print "ind/3", np.floor(ind / 3.),
+        print "ind", ind, "g/s", 
+        #print "ind mod 3", np.mod(ind, 3), "ind/3", np.floor(ind / 3.),
         print "df pred", df0[ind], "df true", df_true,
-        print "(df pred - df true)*2/(df pred + df true)", rr
+        print "df norm err", rr, "code", (rr > 1e-4)
 
 
 def main():
