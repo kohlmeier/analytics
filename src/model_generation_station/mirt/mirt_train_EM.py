@@ -147,10 +147,15 @@ def get_cmd_line_options(arguments=None):
                             "feature and prediction data. Often used to "
                             "analyze accuracy of predictions after model "
                             "training."))
+    # TODO(jace) rename as a flag to turn on/off response times
     parser.add_option("-z", "--correct_only", action="store_true",
                       default=False,
                       help=("Ignore response time, only model using "
                             "correctness."))
+    parser.add_option("-g", "--guess_and_slip", action="store_true",
+                      default=True,
+                      help=("Compute guess and slip parameters for each "
+                            "exercise."))
     parser.add_option("-r", "--resume_from_file", default='',
                       help=("Name of a .npz file to bootstrap the couplings."))
     parser.add_option("-d", "--data_format", default='simple',
@@ -208,7 +213,8 @@ def L_dL_singleuser(arg):
     correct = state['correct']
     exercises_ind = state['exercises_ind']
 
-    dL = mirt_util.Parameters(theta.num_abilities, len(exercises_ind))
+    n = len(exercises_ind)
+    dL = mirt_util.Parameters(theta.num_abilities, n)
 
     # pad the abilities vector with a 1 to act as a bias
     abilities = np.append(abilities.copy(),
@@ -216,13 +222,19 @@ def L_dL_singleuser(arg):
                           axis=0)
     # the abilities to exercise coupling parameters for this exercise
     W_correct = theta.W_correct[exercises_ind, :]
+    guess = theta.guess[exercises_ind].reshape((n, 1))
+    slip = theta.slip[exercises_ind].reshape((n, 1))
 
     # calculate the probability of getting a question in this exercise correct
     Y = np.dot(W_correct, abilities)
-    Z = mirt_util.sigmoid(Y)  # predicted correctness value
+    assert(Y.shape == (n, 1))
+    # compute Z: the predicted correctness value
+    Z_raw = mirt_util.sigmoid(Y)
+    Z = (slip - guess) * Z_raw + guess
     Zt = correct.reshape(Z.shape)  # true correctness value
+    
     pdata = Zt * Z + (1. - Zt) * (1. - Z)  # = 2*Zt*Z - Z + const
-    dLdY = ((2. * Zt - 1.) * Z * (1. - Z)) / pdata
+    dLdY = ((2. * Zt - 1.) * Z * (1. - Z) * (slip - guess)) / pdata
 
     L = -np.sum(np.log(pdata))
     dL.W_correct = -np.dot(dLdY, abilities.T)
@@ -244,6 +256,10 @@ def L_dL_singleuser(arg):
         # normalization for the Gaussian
         L += np.sum(0.5 * np.log(sigma ** 2))
         dL.sigma_time += 1. / sigma.ravel()
+
+    if options.guess_and_slip:
+        dL.guess += (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
+        dL.slip += (2. * Zt * Z_raw - Z_raw)/ pdata
 
     return L, dL, exercises_ind
 
@@ -268,6 +284,16 @@ def L_dL(theta_flat, user_states, num_exercises, options, pool):
     L += np.sum(options.regularization * nu / theta.sigma_time ** 2)
     dL.sigma_time += -2. * options.regularization * nu / theta.sigma_time ** 3
 
+    # also regularize values of guess and slip outside a desired range
+    def reg_guess_and_slip(param_vect, desired_min, desired_max, reg_constant,
+            L, dL):
+        diff = np.maximum(param_vect - desired_max, desired_min - param_vect)
+        diff = np.maximum(diff, 0.)
+        L += np.sum(reg_constant * nu * diff ** 2)
+        dL.sigma_time += 2. * reg_constant * nu * diff
+    reg_guess_and_slip(theta.guess, 0., .25, options.regularization, L, dL)
+    reg_guess_and_slip(theta.slip, .75, 1., options.regularization, L, dL)
+
     # TODO(jascha) this would be faster if user_states was divided into
     # minibatches instead of single students
     if pool is None:
@@ -283,6 +309,8 @@ def L_dL(theta_flat, user_states, num_exercises, options, pool):
         dL.W_correct[exercise_indu, :] += dLu.W_correct
         dL.W_time[exercise_indu, :] += dLu.W_time
         dL.sigma_time[exercise_indu] += dLu.sigma_time
+        dL.guess[exercise_indu] += dLu.guess
+        dL.slip[exercise_indu] += dLu.slip
 
     if options.correct_only:
         dL.W_time[:, :] = 0.
@@ -556,7 +584,7 @@ def run(options):
         f1 = open("%s_epoch=%d.csv" % (options.output, epoch), 'w+')
         nms = sorted(exercise_ind_dict.keys(),
                 key=lambda nm: theta.W_correct[exercise_ind_dict[nm], -1])
-
+        # print CSV headers
         print >>f1, 'correct bias,',
         for ii in range(options.num_abilities):
             print >>f1, "correct coupling %d," % ii,
@@ -564,7 +592,10 @@ def run(options):
         for ii in range(options.num_abilities):
             print >>f1, "time coupling %d," % ii,
         print >>f1, 'time variance,',
+        print >>f1, 'guess,',
+        print >>f1, 'slip,',
         print >>f1, 'exercise name'
+        # now print CSV data -- a row for each exercise
         for nm in nms:
             print >>f1, theta.W_correct[exercise_ind_dict[nm], -1], ',',
             for ii in range(options.num_abilities):
@@ -573,6 +604,8 @@ def run(options):
             for ii in range(options.num_abilities):
                 print >>f1, theta.W_time[exercise_ind_dict[nm], ii], ',',
             print >>f1, theta.sigma_time[exercise_ind_dict[nm]], ',',
+            print >>f1, theta.guess[exercise_ind_dict[nm]], ',',
+            print >>f1, theta.slip[exercise_ind_dict[nm]], ',',
             print >>f1, nm
         f1.close()
 

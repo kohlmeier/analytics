@@ -18,21 +18,40 @@ class Parameters(object):
             self.W_time = np.zeros((num_exercises, num_abilities + 1))
             # the standard deviation for the response time Gaussian
             self.sigma_time = np.zeros((num_exercises))
+            # the guess parameters for each exercise
+            self.guess = np.zeros((num_exercises))
+            # the slip parameters for each exercise
+            self.slip = np.zeros((num_exercises))
         else:
-            # the couplings to correct/incorrect (+1 for bias unit)
             nn = num_exercises * (num_abilities + 1)
+            # the couplings to correct/incorrect (+1 for bias unit)
             self.W_correct = vals[:nn].copy().reshape((-1, num_abilities + 1))
             # the couplings to time taken (+1 for bias unit)
             self.W_time = vals[nn:2 * nn].copy().reshape((-1,
                 num_abilities + 1))
             # the standard deviation for the response time Gaussian
-            self.sigma_time = vals[2 * nn:].reshape((-1))
+            self.sigma_time = vals[2 * nn:2 * nn + num_exercises].reshape((-1))
+
+            if vals.size > 2 * nn + num_exercises:
+                # In 2013-December, guess slip params were added.
+                self.guess = vals[2 * nn + num_exercises:2 * nn + 2 * num_exercises].reshape((-1))
+                self.slip = vals[2 * nn + 2 * num_exercises:].reshape((-1))
+            else:
+                # Models generated prior to use of guess/slip default to zeros            
+                self.guess = np.zeros((num_exercises))
+                self.slip = np.zeros((num_exercises))
 
         assert(self.W_correct.shape == self.W_time.shape)
+        assert(self.guess.shape == self.slip.shape)
 
     def flat(self):
-        return np.concatenate((self.W_correct.ravel(), self.W_time.ravel(),
-                               self.sigma_time.ravel()))
+        return np.concatenate((
+                self.W_correct.ravel(), 
+                self.W_time.ravel(),
+                self.sigma_time.ravel(),
+                self.guess.ravel(),
+                self.slip.ravel(),
+                ))
 
 
 def sigmoid(X):
@@ -95,14 +114,15 @@ def conditional_probability_correct(abilities, theta, exercises_ind):
             Should be 1-d with shape = (# of exercises queried for)
 
     Returns:
-        An ndarray of floats with shape = (exercises_ind.size)
+        An ndarray of floats with shape = (exercises_ind.size,)
 
     """
     # Pad the abilities vector with a 1 to act as a bias.
     # The shape of abilities will become (a+1, 1).
     abilities = np.append(abilities.copy(), np.ones((1, 1)), axis=0)
     W_correct = theta.W_correct[exercises_ind, :]
-    Z = sigmoid(np.dot(W_correct, abilities))
+    Z_raw = sigmoid(np.dot(W_correct, abilities))
+    Z = (theta.slip - theta.guess) * Z_raw + theta.guess
     Z = np.reshape(Z, Z.size)  # flatten to 1-d ndarray
     return Z
 
