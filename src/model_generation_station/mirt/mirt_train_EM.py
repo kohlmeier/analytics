@@ -223,8 +223,8 @@ def L_dL_singleuser(arg):
     # the abilities to exercise coupling parameters for this exercise
     W_correct = theta.W_correct[exercises_ind, :]
     # STOPSHIP(jace) - got to be a better way then messing up the gradient here
-    guess = theta.bounded_guess[exercises_ind].reshape((n, 1))
-    slip = theta.bounded_slip[exercises_ind].reshape((n, 1))
+    guess = theta.bounded_guess()[exercises_ind].reshape((n, 1))
+    slip = theta.bounded_slip()[exercises_ind].reshape((n, 1))
 
     # calculate the probability of getting a question in this exercise correct
     Y = np.dot(W_correct, abilities)
