@@ -60,9 +60,9 @@ class Parameters(object):
         """
         bounds = [(None, None)] * (self.flat().size - self.num_exercises * 2)
         # guess is bounded below by 0.
-        bounds.append([(0., None)] * self.num_exercises)
+        bounds.append([(0., .5)] * self.num_exercises)
         # slip is bounded above by 1.
-        bounds.append([(None, 1.)] * self.num_exercises)
+        bounds.append([(.5, 1.)] * self.num_exercises)
 
 
 def sigmoid(X):
