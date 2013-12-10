@@ -33,7 +33,8 @@ def gen_data(script_dir, data_file, train_file, test_file, s3_access):
             script_dir,
             '-xv'])
 
-    print 'Separating data into train and test files'
+    print 'Separating data %s into train and test files at (%s, %s)' % (
+            data_file, train_file, test_file)
     model_training_util.sep_into_train_and_test(
         data_file, train_file, test_file)
 
