@@ -60,9 +60,10 @@ class Parameters(object):
         """
         bounds = [(None, None)] * (self.flat().size - self.num_exercises * 2)
         # guess is bounded below by 0.
-        bounds.append([(0., .5)] * self.num_exercises)
+        bounds.extend([(0., .5)] * self.num_exercises)
         # slip is bounded above by 1.
-        bounds.append([(.5, 1.)] * self.num_exercises)
+        bounds.extend([(.5, 1.)] * self.num_exercises)
+        return bounds
 
     def bounded_guess(self):
         return np.clip(self.guess, 0., .5)
