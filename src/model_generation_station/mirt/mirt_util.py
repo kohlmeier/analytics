@@ -32,12 +32,16 @@ class Parameters(object):
             # the standard deviation for the response time Gaussian
             self.sigma_time = vals[2 * nn:2 * nn + num_exercises].reshape((-1))
 
+            # In 2013-December, guess slip params were added.  Check here if
+            # these params are included or not.
             if vals.size > 2 * nn + num_exercises:
-                # In 2013-December, guess slip params were added.
                 self.guess = vals[2 * nn + num_exercises:2 * nn + 2 * num_exercises].reshape((-1))
-                self.slip = vals[2 * nn + 2 * num_exercises:].reshape((-1))
+                # slip params are a special case in terms of how they are 
+                # represented in theta_flat-- they are stored in theta_flat
+                # as an offset to be subtracted from 1.  
+                self.slip = 1.0 - vals[2 * nn + 2 * num_exercises:].reshape((-1))
             else:
-                # Models generated prior to use of guess/slip default to zeros            
+                # Models generated prior to use of guess/slip get defaults            
                 self.guess = np.zeros((num_exercises))
                 self.slip = np.ones((num_exercises))
 
@@ -50,7 +54,7 @@ class Parameters(object):
                 self.W_time.ravel(),
                 self.sigma_time.ravel(),
                 self.guess.ravel(),
-                self.slip.ravel(),
+                1.0 - self.slip.ravel(),
                 ))
 
     def get_bounds(self):
@@ -60,16 +64,15 @@ class Parameters(object):
         """
         bounds = [(None, None)] * (self.flat().size - self.num_exercises * 2)
         # guess is bounded below by 0.
-        bounds.extend([(0., .5)] * self.num_exercises)
-        # slip is bounded above by 1.
-        bounds.extend([(.5, 1.)] * self.num_exercises)
+        bounds.extend([(0., .4)] * self.num_exercises)
+        # slip is bounded above by 1.  but recall (from above in this class)
+        # that slip params are stored in theta_flat as an offset subtracted 
+        # from 1., so in terms of theta_flat (which is what fmin_l_bfgs_b
+        # operates on) we want to bound in terms of (0., .4), which will
+        # bound slip by (.6, 1.)
+        bounds.extend([(0., .4)] * self.num_exercises)
         return bounds
 
-    def bounded_guess(self):
-        return np.clip(self.guess, 0., .5)
-
-    def bounded_slip(self):
-        return np.clip(self.slip, .5, 1.)
 
 def sigmoid(X):
     """Compute the sigmoid function element-wise on X.

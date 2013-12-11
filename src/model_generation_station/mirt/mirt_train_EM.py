@@ -226,8 +226,8 @@ def L_dL_singleuser(arg):
     # the abilities to exercise coupling parameters for this exercise
     W_correct = theta.W_correct[exercises_ind, :]
     # STOPSHIP(jace) - got to be a better way then messing up the gradient here
-    guess = theta.bounded_guess()[exercises_ind].reshape((n, 1))
-    slip = theta.bounded_slip()[exercises_ind].reshape((n, 1))
+    guess = theta.guess[exercises_ind].reshape((n, 1))
+    slip = theta.slip[exercises_ind].reshape((n, 1))
 
     # calculate the probability of getting a question in this exercise correct
     Y = np.dot(W_correct, abilities)
@@ -238,7 +238,7 @@ def L_dL_singleuser(arg):
     Zt = correct.reshape(Z.shape)  # true correctness value
     
     pdata = Zt * Z + (1. - Zt) * (1. - Z)  # = 2*Zt*Z - Z + const
-    dLdY = ((2. * Zt - 1.) * Z * (1. - Z) * (slip - guess)) / pdata
+    dLdY = ((2. * Zt - 1.) * Z_raw * (1. - Z_raw) * (slip - guess)) / pdata
 
     L = -np.sum(np.log(pdata))
     dL.W_correct = -np.dot(dLdY, abilities.T)
@@ -263,10 +263,13 @@ def L_dL_singleuser(arg):
 
     if options.guess_and_slip:
         delta_guess = -1. * (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
-        dL.guess += delta_guess.ravel()  
+        dL.guess = delta_guess.ravel()  
         
         delta_slip = -1. * (2. * Zt * Z_raw - Z_raw)/ pdata
-        dL.slip += delta_slip.ravel()
+        dL.slip = delta_slip.ravel()
+    else:
+        dL.guess = np.zeroes(n)
+        dL.slip = np.zeroes(n)
 
     return L, dL, exercises_ind
 
@@ -365,7 +368,8 @@ def emit_features(user_states, theta, options, split_desc):
 
 def check_grad(L_dL, theta_flat, args=()):
     print >>sys.stderr, "Checking gradients."
-
+    print theta_flat.size
+    
     step_size = 1e-6
 
     f0, df0 = L_dL(theta_flat.copy(), *args)
@@ -373,7 +377,7 @@ def check_grad(L_dL, theta_flat, args=()):
     # full size model, but still statistically test every type of gradient.
     test_order = range(theta_flat.size)
     np.random.shuffle(test_order)
-    for ind in test_order:
+    for ind in test_order[:100]:
         theta_offset = np.zeros(theta_flat.size)
         theta_offset[ind] = step_size
         f1, df1 = L_dL(theta_flat.copy() + theta_offset, *args)
@@ -382,10 +386,13 @@ def check_grad(L_dL, theta_flat, args=()):
         # error in the gradient divided by the mean gradient
         rr = (df0[ind] - df_true) * 2. / (df0[ind] + df_true)
 
-        print "ind", ind, "g/s", 
+        warn = abs(df0[ind]) > 0. and abs(df_true) > 0. and abs(rr) > 1e-4
+        print warn, "ind", ind, "g/s", 
         #print "ind mod 3", np.mod(ind, 3), "ind/3", np.floor(ind / 3.),
         print "df pred", df0[ind], "df true", df_true,
-        print "df norm err", rr, "code", (rr > 1e-4)
+        print "df norm err", rr
+        if warn:
+            print "   ", theta_flat[ind], theta_offset[ind], theta_flat[ind] + theta_offset[ind]
 
 
 def main():
