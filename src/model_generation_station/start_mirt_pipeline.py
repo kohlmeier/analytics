@@ -132,34 +132,40 @@ def run_with_arguments(arguments):
 
     for abilities in arguments.abilities:
         for time in arguments.time_arguments:
-            time_str = 'time' if time else 'no_time'
-            param_str = "%s_%s_%s" % (abilities, time_str, datetime_str)
-            outfilename = mirt_dir + param_str + '/'
-            model_training_util.mkdir_p(outfilename)
-            # to set more fine-grained parameters about MIRT training, look at
-            # the arguments at mirt/mirt_train_EM.py
-            mirt_train_params = [
-                '-a', str(abilities),
-                '-w', str(arguments.workers),
-                '-n', str(arguments.num_epochs),
-                '-f', train_file,
-                '-o', outfilename]
-            if time:
-                mirt_train_params.append(time)
-            mirt_train_EM.run_programmatically(mirt_train_params)
+            # TODO(jace) make guessandslip a command line arg
+            for guess_and_slip in ['', '-g']:
+                time_str = 'time' if time else 'no_time'
+                guess_slip_str = 'guess' if guess_and_slip else 'no_guess'
+                param_str = "%s_%s_%s_%s" % (
+                        abilities, guess_slip_str, time_str, datetime_str)
+                outfilename = mirt_dir + param_str + '/'
+                model_training_util.mkdir_p(outfilename)
+                # to set more fine-grained parameters about MIRT training, look at
+                # the arguments at mirt/mirt_train_EM.py
+                mirt_train_params = [
+                    '-a', str(abilities),
+                    '-w', str(arguments.workers),
+                    '-n', str(arguments.num_epochs),
+                    '-f', train_file,
+                    '-o', outfilename]
+                if time:
+                    mirt_train_params.append(time)
+                if guess_and_slip:
+                    mirt_train_params.append(guess_and_slip)
+                mirt_train_EM.run_programmatically(mirt_train_params)
 
-            npz_files = os.listdir(outfilename)
-            npz_files.sort(key=lambda fname: fname.split('_')[-1])
+                npz_files = os.listdir(outfilename)
+                npz_files.sort(key=lambda fname: fname.split('_')[-1])
 
-            last_npz = outfilename + npz_files[-1]
-            json_outfile = json_dir + param_str + '.json'
-            mirt_npz_to_json.mirt_npz_to_json(
-                last_npz, outfile=json_outfile, slug=param_str,
-                title='math', description='math')
-            roc_file = roc_dir + param_str + '.roc'
-            generate_predictions.load_and_simulate_assessment(
-                json_outfile, roc_file, test_file, user_idx=0,
-                exercise_idx=2, time_idx=3, correct_idx=4)
+                last_npz = outfilename + npz_files[-1]
+                json_outfile = json_dir + param_str + '.json'
+                mirt_npz_to_json.mirt_npz_to_json(
+                    last_npz, outfile=json_outfile, slug=param_str,
+                    title='math', description='math')
+                roc_file = roc_dir + param_str + '.roc'
+                generate_predictions.load_and_simulate_assessment(
+                    json_outfile, roc_file, test_file, user_idx=0,
+                    exercise_idx=2, time_idx=3, correct_idx=4)
     print
     print "If you're running this script somewhere you can't see"
     print "matplotlib, copy %s* to somewhere you" % roc_dir

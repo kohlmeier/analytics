@@ -153,7 +153,7 @@ def get_cmd_line_options(arguments=None):
                       help=("Ignore response time, only model using "
                             "correctness."))
     parser.add_option("-g", "--guess_and_slip", action="store_true",
-                      default=True,
+                      default=False,
                       help=("Compute guess and slip parameters for each "
                             "exercise."))
     parser.add_option("-r", "--resume_from_file", default='',
@@ -268,8 +268,8 @@ def L_dL_singleuser(arg):
         delta_slip = -1. * (2. * Zt * Z_raw - Z_raw)/ pdata
         dL.slip = delta_slip.ravel()
     else:
-        dL.guess = np.zeroes(n)
-        dL.slip = np.zeroes(n)
+        dL.guess = np.zeros(n)
+        dL.slip = np.zeros(n)
 
     return L, dL, exercises_ind
 
