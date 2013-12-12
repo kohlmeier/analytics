@@ -94,7 +94,7 @@ def get_command_line_arguments(arguments=None):
     # Calculates the arguments we want to go through viz-a-viz
     # training models and including time.
     if arguments.train_with_and_without_time:
-        arguments.time_arguments = ['', '-z']
+        arguments.time_arguments = ['-z', '']
     elif arguments.train_with_time:
         arguments.time_arguments = ['']
     else:

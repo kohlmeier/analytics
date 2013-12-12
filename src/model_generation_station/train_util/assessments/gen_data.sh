@@ -13,7 +13,7 @@ assessments_data_util="${model_generation_station}/train_util/assessments"
 download=true
 if $download; then
     rm "${download_dir}/all_unfiltered.responses"
-    for i in $(seq 7 -1 1)  # TODO(jace) take as an arg
+    for i in $(seq 28 -1 1)  # TODO(jace) take as an arg
     do
       # for each day in the last week download the user assessment data and save it
       d=`date --"date=$i day ago" +%Y-%m-%d`;
