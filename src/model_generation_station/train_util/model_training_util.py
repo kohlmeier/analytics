@@ -9,6 +9,7 @@ def sep_into_train_and_test(
     train = open(trainfile_name, 'w')
     test = open(testfile_name, 'w')
     current_user = ''
+    random.seed(12345)  # if running on identical data, get an identical split
     for line in infile:
         user = line.split(',')[0]
         if user != current_user:
