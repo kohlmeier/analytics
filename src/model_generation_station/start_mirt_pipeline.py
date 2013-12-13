@@ -133,7 +133,7 @@ def run_with_arguments(arguments):
     for abilities in arguments.abilities:
         for time in arguments.time_arguments:
             # TODO(jace) make guessandslip a command line arg
-            for guess_and_slip in ['', '-g']:
+            for guess_and_slip in ['-g', '']:
                 time_str = 'time' if time else 'no_time'
                 guess_slip_str = 'guess' if guess_and_slip else 'no_guess'
                 param_str = "%s_%s_%s_%s" % (
