@@ -234,11 +234,11 @@ def L_dL_singleuser(arg):
     assert(Y.shape == (n, 1))
     # compute Z: the predicted correctness value
     Z_raw = mirt_util.sigmoid(Y)
-    Z = (slip - guess) * Z_raw + guess
+    Z = (1. - slip - guess) * Z_raw + guess
     Zt = correct.reshape(Z.shape)  # true correctness value
     
     pdata = Zt * Z + (1. - Zt) * (1. - Z)  # = 2*Zt*Z - Z + const
-    dLdY = ((2. * Zt - 1.) * Z_raw * (1. - Z_raw) * (slip - guess)) / pdata
+    dLdY = ((2. * Zt - 1.) * Z_raw * (1. - Z_raw) * (1. - slip - guess)) / pdata
 
     L = -np.sum(np.log(pdata))
     dL.W_correct = -np.dot(dLdY, abilities.T)
@@ -262,10 +262,10 @@ def L_dL_singleuser(arg):
         dL.sigma_time += 1. / sigma.ravel()
 
     if options.guess_and_slip:
-        delta_guess = -1. * (-2. * Zt * Z_raw + Z_raw + 2. * Zt - 1.)/ pdata
+        delta_guess = -1. * (-2.*Zt*Z_raw + Z_raw + 2.*Zt - 1.) / pdata
         dL.guess = delta_guess.ravel()  
         
-        delta_slip = -1. * (2. * Zt * Z_raw - Z_raw)/ pdata
+        delta_slip = -1. * (Z_raw - 2.*Zt*Z_raw) / pdata
         dL.slip = delta_slip.ravel()
     else:
         dL.guess = np.zeros(n)

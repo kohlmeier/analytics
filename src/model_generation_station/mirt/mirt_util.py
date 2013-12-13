@@ -21,7 +21,7 @@ class Parameters(object):
             # the guess parameters for each exercise
             self.guess = np.zeros((num_exercises))
             # the slip parameters for each exercise
-            self.slip = np.ones((num_exercises))
+            self.slip = np.zeros((num_exercises))
         else:
             nn = num_exercises * (num_abilities + 1)
             # the couplings to correct/incorrect (+1 for bias unit)
@@ -39,11 +39,11 @@ class Parameters(object):
                 # slip params are a special case in terms of how they are 
                 # represented in theta_flat-- they are stored in theta_flat
                 # as an offset to be subtracted from 1.  
-                self.slip = 1.0 - vals[2 * nn + 2 * num_exercises:].reshape((-1))
+                self.slip = vals[2 * nn + 2 * num_exercises:].reshape((-1))
             else:
                 # Models generated prior to use of guess/slip get defaults            
                 self.guess = np.zeros((num_exercises))
-                self.slip = np.ones((num_exercises))
+                self.slip = np.zeros((num_exercises))
 
         assert(self.W_correct.shape == self.W_time.shape)
         assert(self.guess.shape == self.slip.shape)
@@ -54,7 +54,7 @@ class Parameters(object):
                 self.W_time.ravel(),
                 self.sigma_time.ravel(),
                 self.guess.ravel(),
-                1.0 - self.slip.ravel(),
+                self.slip.ravel(),
                 ))
 
     def get_bounds(self):
@@ -63,13 +63,9 @@ class Parameters(object):
         This is useful, for example, in calls to scipy.optimize.fmin_l_bfgs_b.
         """
         bounds = [(None, None)] * (self.flat().size - self.num_exercises * 2)
-        # guess is bounded below by 0.
+        # guess is bounded by..
         bounds.extend([(0., .4)] * self.num_exercises)
-        # slip is bounded above by 1.  but recall (from above in this class)
-        # that slip params are stored in theta_flat as an offset subtracted 
-        # from 1., so in terms of theta_flat (which is what fmin_l_bfgs_b
-        # operates on) we want to bound in terms of (0., .4), which will
-        # bound slip by (.6, 1.)
+        # slip is bounded by..
         bounds.extend([(0., .4)] * self.num_exercises)
         return bounds
 
@@ -145,7 +141,7 @@ def conditional_probability_correct(abilities, theta, exercises_ind):
     slip = theta.slip[exercises_ind].reshape((len(exercises_ind), 1))
     
     Z_raw = sigmoid(np.dot(W_correct, abilities))
-    Z = (slip - guess) * Z_raw + guess
+    Z = (1. - slip - guess) * Z_raw + guess
     Z = np.reshape(Z, Z.size)  # flatten to 1-d ndarray
     return Z
 
