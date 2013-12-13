@@ -207,10 +207,10 @@ def create_user_state(lines, exercise_ind_dict, options):
     return state
 
 
-def L_dL_singleuser(arg):
+def L_dL_singleuser(args):
     """ calculate log likelihood and gradient wrt couplings of mIRT model
         for single user """
-    theta, state, options = arg
+    theta, state, epoch, options = args
 
     abilities = state['abilities'].copy()
     correct = state['correct']
@@ -261,7 +261,8 @@ def L_dL_singleuser(arg):
         L += np.sum(0.5 * np.log(sigma ** 2))
         dL.sigma_time += 1. / sigma.ravel()
 
-    if options.guess_and_slip:
+    # TODO(jace) comment on epoch delay if it works
+    if options.guess_and_slip and epoch > 15:
         delta_guess = -1. * (-2.*Zt*Z_raw + Z_raw + 2.*Zt - 1.) / pdata
         dL.guess = delta_guess.ravel()  
         
@@ -274,7 +275,7 @@ def L_dL_singleuser(arg):
     return L, dL, exercises_ind
 
 
-def L_dL(theta_flat, user_states, num_exercises, options, pool):
+def L_dL(theta_flat, user_states, num_exercises, epoch, options, pool):
     """ calculate log likelihood and gradient wrt couplings of mIRT model """
 
     L = 0.
@@ -309,10 +310,10 @@ def L_dL(theta_flat, user_states, num_exercises, options, pool):
     # minibatches instead of single students
     if pool is None:
         rslts = map(L_dL_singleuser,
-                    [(theta, state, options) for state in user_states])
+                    [(theta, state, epoch, options) for state in user_states])
     else:
         rslts = pool.map(L_dL_singleuser,
-                         [(theta, state, options) for state in user_states],
+                         [(theta, state, epoch, options) for state in user_states],
                          chunksize=100)
     for r in rslts:
         Lu, dLu, exercise_indu = r
@@ -551,7 +552,7 @@ def run(options):
 
         if options.check_gradient:
             check_grad(L_dL, theta.flat(), args=(user_states,
-                num_exercises, options, pool))
+                num_exercises, epoch, options, pool))
 
         # Maximization step
         old_theta_flat = theta.flat()
@@ -560,7 +561,7 @@ def run(options):
             L_dL,
             theta.flat(),
             bounds=theta.get_bounds(),
-            args=(user_states, num_exercises, options, pool),
+            args=(user_states, num_exercises, epoch, options, pool),
             disp=0,
             maxfun=options.max_pass_lbfgs, m=100)
         theta = mirt_util.Parameters(options.num_abilities, num_exercises,
