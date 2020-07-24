@@ -75,8 +75,8 @@ def create_hive_cluster(job_name, options, hive_script=None, script_args={}):
         '--name', job_name,
         '--log-uri', options['log_uri'],
         '--num-instances', options['num_instances'],
-        '--master-instance-type', options['master_instance_type'],
-        '--slave-instance-type', options['slave_instance_type']
+        '--main-instance-type', options['main_instance_type'],
+        '--subordinate-instance-type', options['subordinate_instance_type']
         ]
 
     if hive_script:
@@ -194,12 +194,12 @@ def get_option_parser():
         help='The name of the job flow being created')
     parser.add_option('--num_instances', type='int', default=3,
         help='Number of instances (machines) to use (default: %default)')
-    parser.add_option('--master_instance_type', type='string',
+    parser.add_option('--main_instance_type', type='string',
         default='m2.xlarge',
-        help='The type of master instance to launch (default: %default')
-    parser.add_option('--slave_instance_type', type='string',
+        help='The type of main instance to launch (default: %default')
+    parser.add_option('--subordinate_instance_type', type='string',
         default='m2.xlarge',
-        help='The type of slave instance to launch (default: %default')
+        help='The type of subordinate instance to launch (default: %default')
     parser.add_option('--log_uri', type='string',
         default='s3://ka-mapreduce/logs/',
         help='Location in S3 to store logs (default: %default)')

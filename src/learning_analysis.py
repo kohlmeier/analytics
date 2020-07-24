@@ -12,8 +12,8 @@ Steps to generate input data:
    elastic-mapreduce --create --alive --name "topic mode difficulty data" \
       --hive-versions 0.11.0 \
       --num-instances 8 \
-      --master-instance-type m2.xlarge \
-      --slave-instance-type m2.xlarge \
+      --main-instance-type m2.xlarge \
+      --subordinate-instance-type m2.xlarge \
       --hive-script --arg s3://ka-mapreduce/code/hive/user_experiment_info.q \
       --log-uri s3://ka-mapreduce/logs \
       --args -i,s3://ka-mapreduce/code/hive/ka_hive_init.q \

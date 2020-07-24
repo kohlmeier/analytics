@@ -10,13 +10,13 @@ mongo. This simply helps import that data for mongo for reporting dashboards.
 
 
 USAGE = """%prog [options] \\
-            [hive_masternode] [table_name] \\
+            [hive_mainnode] [table_name] \\
             [target_db] [target_collection] \\
             [[partition_col_0] [partition_col_1] ...]
 
 Reads lines from files representing Hive table data on S3 and dumps them to
 a reporting database. The data is read off of S3, but requires meta data to
-first be read about it from a Hive masternode.
+first be read about it from a Hive mainnode.
 
 If tables are partitioned, partition columns will be included in the imported
 data. Clients may specify partition columns using a key=value
@@ -130,7 +130,7 @@ def main(table_location,
                 break
 
             # HACK: some files are '\t' delimited? Switch delimiters.
-            # TODO(benkomalo): read format from metadata in Hive master?
+            # TODO(benkomalo): read format from metadata in Hive main?
             if delimiter not in line:
                 delimiter = '\t'
 
@@ -251,7 +251,7 @@ def parse_command_line_args():
     parser.add_option("--hive_init", action="store_true",
         dest="hive_init", default=False,
         help=('If True, this script will execute ka_hive_init.q on the '
-              'hive_masternode before attempting the import.  This is useful '
+              'hive_mainnode before attempting the import.  This is useful '
               'for making sure the metadata on the hive cluster is up to '
               'date, e.g. if data you want to import was create by an '
               'unknown on-demand cluster.'))
@@ -301,8 +301,8 @@ if __name__ == '__main__':
     options, args = parse_command_line_args()
 
     # Step 1 - read meta data.
-    hive_masternode = args[0]  # Generally, 'ka-hive'
-    hive_mysql_connector.configure(hive_masternode, options.ssh_keyfile)
+    hive_mainnode = args[0]  # Generally, 'ka-hive'
+    hive_mysql_connector.configure(hive_mainnode, options.ssh_keyfile)
 
     if options.hive_init:
         hive_mysql_connector.run_hive_init()
@@ -312,8 +312,8 @@ if __name__ == '__main__':
     table_location = hive_mysql_connector.get_table_location(table_name)
 
     if not table_location:
-        raise Exception("Can't read info about %s in Hive master %s" %
-                        (hive_masternode, table_name))
+        raise Exception("Can't read info about %s in Hive main %s" %
+                        (hive_mainnode, table_name))
     if not table_location.startswith('s3://ka-mapreduce/'):
         raise Exception("Can only import from s3://ka-mapreduce for now")
     column_info = hive_mysql_connector.get_table_columns(table_name)

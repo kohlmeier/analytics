@@ -3,9 +3,9 @@
 """A script which uses SSH to run MySQL commands on a Hive cluster.
 
 This abstracts away querying information about Hive tables from any Python
-environment that has SSH credentials to access a Hive cluster's masternode.
+environment that has SSH credentials to access a Hive cluster's mainnode.
 Hive uses a MySQL instance to store meta data about tables and it's assumed
-the master node specified has up to date information on the Hive tables
+the main node specified has up to date information on the Hive tables
 being queries.
 
 Example uses:
@@ -27,10 +27,10 @@ _ssh_keyfile = None
 
 
 def configure(hive_hostname, ssh_keyfile=None):
-    """Configures the connection to the Hive masternode for the MySQL queries.
+    """Configures the connection to the Hive mainnode for the MySQL queries.
 
     Arguments:
-        hive_hostname - the IP or hostname of the Hive masternode.
+        hive_hostname - the IP or hostname of the Hive mainnode.
         ssh_keyfile - the location of the SSH key to use. If unspecified, will
             not provide a key location in the SSH command (and will rely on
             $HOME/.ssh/config to have the proper information for the host)
@@ -55,7 +55,7 @@ def _run_mysql_query_over_ssh(query):
     """
 
     if not is_configured():
-        raise Exception("Connection to Hive master not configured yet.")
+        raise Exception("Connection to Hive main not configured yet.")
 
     global _hive_hostname, _ssh_keyfile
 

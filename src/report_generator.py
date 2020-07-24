@@ -43,8 +43,8 @@ def parse_command_line_args():
     parser.add_option("-c", "--config", help="Config file. REQUIRED")
     parser.add_option("-i", "--num_instances", type="int", default=5,
                        help="Number of nodes to use in a Hive cluster")
-    parser.add_option("-m", "--hive_masternode", default="ka-hive",
-                       help="Hive master node alias")
+    parser.add_option("-m", "--hive_mainnode", default="ka-hive",
+                       help="Hive main node alias")
     parser.add_option("-w", "--max_wait", type="float", default=24.0,
                        help="Max # hours we will wait for the data")
     parser.add_option("--skip_hive_scripts", action="store_true",
@@ -60,7 +60,7 @@ def parse_command_line_args():
     parser.add_option("--hive_init", action="store_true",
         dest="hive_init", default=False,
         help=('If True, this script will execute ka_hive_init.q on the '
-              'hive_masternode before checking for data.  This is useful '
+              'hive_mainnode before checking for data.  This is useful '
               'for making sure the metadata on the hive cluster is up to '
               'date, e.g. if data you want to import was create by an '
               'unknown on-demand cluster.'))
@@ -99,7 +99,7 @@ def partition_available(s3bucket, partition_location):
 def wait_for_data(wait_for_config, options):
     """Wait for data before kicking off hive jobs"""
     # Step 1 - read meta data.
-    hive_mysql_connector.configure(options.hive_masternode,
+    hive_mysql_connector.configure(options.hive_mainnode,
         options.ssh_keyfile)
 
     if options.hive_init:
@@ -175,7 +175,7 @@ def run_hive_jobs(jobname, steps, num_instances):
         sys.exit(1)
 
 
-def run_report_importer(hive_masternode, steps):
+def run_report_importer(hive_mainnode, steps):
     """Import hive results to mongo"""
     for step in steps:
         # It's possible to leave out hive_table and mongo_collection,
@@ -203,7 +203,7 @@ def run_report_importer(hive_masternode, steps):
         # %s = dt='2013-05' name='hello'
         command = ('python /home/analytics/analytics/src/report_importer.py'
                    ' %s %s %s report %s %s') % (
-                   options, hive_masternode, step['hive_table'],
+                   options, hive_mainnode, step['hive_table'],
                    step['mongo_collection'], step['importer_args'])
 
         g_logger.info("Running command: \n%s" % (command))
@@ -240,7 +240,7 @@ def main():
         g_logger.info("Skipping " + step3)
     else:
         g_logger.info(step3)
-        run_report_importer(options.hive_masternode, config['steps'])
+        run_report_importer(options.hive_mainnode, config['steps'])
 
     g_logger.info("Report generation finished.")
 
